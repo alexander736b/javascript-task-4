@@ -13,10 +13,6 @@ const isStar = true;
 function getEmitter() {
     let eventsStudents = {};
 
-    const usualyPerformEvent = function () {
-        return true;
-    };
-
     function addEvent(event, context, handler, performEvent) {
         if (eventsStudents[event] === undefined) {
             eventsStudents[event] = [];
@@ -52,6 +48,10 @@ function getEmitter() {
          * @returns {Object}
          */
         on: function (event, context, handler) {
+            const usualyPerformEvent = function () {
+                return true;
+            };
+
             addEvent(event, context, handler, usualyPerformEvent);
 
             return this;
@@ -116,7 +116,7 @@ function getEmitter() {
          * @returns {Object}
          */
         several: function (event, context, handler, times) {
-            let performEventTimes = function () {
+            const performEventTimes = function () {
                 if (this.index >= times) {
                     return false;
                 }
@@ -124,8 +124,8 @@ function getEmitter() {
                 return true;
             };
 
-            if (times < 0) {
-                performEventTimes = usualyPerformEvent;
+            if (times <= 0) {
+                return this.on(event, context, handler);
             }
 
             addEvent(event, context, handler, performEventTimes);
@@ -143,7 +143,7 @@ function getEmitter() {
          * @returns {Object}
          */
         through: function (event, context, handler, frequency) {
-            let performEventFrequency = function () {
+            const performEventFrequency = function () {
                 if (this.index % frequency !== 0) {
                     return false;
                 }
@@ -151,8 +151,8 @@ function getEmitter() {
                 return true;
             };
 
-            if (frequency < 0) {
-                performEventFrequency = usualyPerformEvent;
+            if (frequency <= 0) {
+                return this.on(event, context, handler);
             }
 
             addEvent(event, context, handler, performEventFrequency);
