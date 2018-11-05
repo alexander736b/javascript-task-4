@@ -11,6 +11,37 @@ const isStar = true;
  * @returns {Object}
  */
 function getEmitter() {
+    let eventsStudents = {};
+
+    const usualyPerformEvent = function () {
+        return true;
+    };
+
+    function addEvent(event, context, handler, performEvent) {
+        if (eventsStudents[event] === undefined) {
+            eventsStudents[event] = [];
+        }
+
+        eventsStudents[event].push({
+            context,
+            handler,
+            index: 0,
+            performEvent
+        });
+    }
+
+    function getActiveEvents(event) {
+        const activeEvents = [event];
+        const expression = event.split('.');
+
+        for (let i = 1; i < expression.length; i++) {
+            const a = expression.slice(0, expression.length - i);
+            activeEvents.push(a.join('.'));
+        }
+
+        return activeEvents;
+    }
+
     return {
 
         /**
@@ -18,26 +49,61 @@ function getEmitter() {
          * @param {String} event
          * @param {Object} context
          * @param {Function} handler
+         * @returns {Object}
          */
         on: function (event, context, handler) {
-            console.info(event, context, handler);
+            addEvent(event, context, handler, usualyPerformEvent);
+
+            return this;
         },
 
         /**
          * Отписаться от события
          * @param {String} event
          * @param {Object} context
+         * @returns {Object}
          */
         off: function (event, context) {
-            console.info(event, context);
+            if (eventsStudents[event] === undefined) {
+                return this;
+            }
+
+            const nameEvents = Object.keys(eventsStudents);
+
+            nameEvents.forEach(element => {
+                if (element.startsWith(event)) {
+                    eventsStudents[event] = eventsStudents[event].filter(value =>
+                        value.context !== context);
+                }
+            });
+
+            return this;
         },
 
         /**
          * Уведомить о событии
          * @param {String} event
+         * @returns {Object}
          */
         emit: function (event) {
-            console.info(event);
+            const activeEvents = getActiveEvents(event);
+            const nameEvents = Object.keys(eventsStudents);
+
+            for (let i = 0; i < activeEvents.length; i++) {
+                nameEvents.forEach(element => {
+                    if (element === activeEvents[i]) {
+                        eventsStudents[element].forEach(value => {
+                            if (value.performEvent()) {
+                                value.handler.call(value.context);
+                            }
+
+                            value.index++;
+                        });
+                    }
+                });
+            }
+
+            return this;
         },
 
         /**
@@ -47,9 +113,24 @@ function getEmitter() {
          * @param {Object} context
          * @param {Function} handler
          * @param {Number} times – сколько раз получить уведомление
+         * @returns {Object}
          */
         several: function (event, context, handler, times) {
-            console.info(event, context, handler, times);
+            let performEventTimes = function () {
+                if (this.index >= times) {
+                    return false;
+                }
+
+                return true;
+            };
+
+            if (times < 0) {
+                performEventTimes = usualyPerformEvent;
+            }
+
+            addEvent(event, context, handler, performEventTimes);
+
+            return this;
         },
 
         /**
@@ -59,9 +140,24 @@ function getEmitter() {
          * @param {Object} context
          * @param {Function} handler
          * @param {Number} frequency – как часто уведомлять
+         * @returns {Object}
          */
         through: function (event, context, handler, frequency) {
-            console.info(event, context, handler, frequency);
+            let performEventFrequency = function () {
+                if (this.index % frequency !== 0) {
+                    return false;
+                }
+
+                return true;
+            };
+
+            if (frequency < 0) {
+                performEventFrequency = usualyPerformEvent;
+            }
+
+            addEvent(event, context, handler, performEventFrequency);
+
+            return this;
         }
     };
 }
