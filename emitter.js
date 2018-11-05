@@ -4,7 +4,7 @@
  * Сделано задание на звездочку
  * Реализованы методы several и through
  */
-const isStar = false;
+const isStar = true;
 
 /**
  * Возвращает новый emitter
@@ -72,7 +72,7 @@ function getEmitter() {
 
             nameEvents.forEach(element => {
                 if (element.startsWith(event)) {
-                    eventsStudents[event] = eventsStudents[event].filter(value =>
+                    eventsStudents[element] = eventsStudents[event].filter(value =>
                         value.context !== context);
                 }
             });
