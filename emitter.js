@@ -13,7 +13,7 @@ const isStar = true;
 function getEmitter() {
     let eventsStudents = {};
 
-    function addEvent(event, context, handler, performEvent) {
+    function addEvent(event, context, handler, shouldPerformEvent) {
         if (eventsStudents[event] === undefined) {
             eventsStudents[event] = [];
         }
@@ -21,8 +21,8 @@ function getEmitter() {
         eventsStudents[event].push({
             context,
             handler,
-            index: 0,
-            performEvent
+            numberOfCalls: 0,
+            shouldPerformEvent
         });
     }
 
@@ -93,11 +93,11 @@ function getEmitter() {
                 nameEvents.forEach(element => {
                     if (element === activeEvents[i]) {
                         eventsStudents[element].forEach(value => {
-                            if (value.performEvent()) {
+                            if (value.shouldPerformEvent()) {
                                 value.handler.call(value.context);
                             }
 
-                            value.index++;
+                            value.numberOfCalls++;
                         });
                     }
                 });
@@ -117,7 +117,16 @@ function getEmitter() {
          */
         several: function (event, context, handler, times) {
             const performEventTimes = function () {
-                if (this.index >= times) {
+                if (this.numberOfCalls >= times) {
+                    const nameEvents = Object.keys(eventsStudents);
+
+                    nameEvents.forEach(element => {
+                        if (element === event) {
+                            eventsStudents[element] = eventsStudents[event].filter(value =>
+                                value.context !== context);
+                        }
+                    });
+
                     return false;
                 }
 
@@ -144,7 +153,7 @@ function getEmitter() {
          */
         through: function (event, context, handler, frequency) {
             const performEventFrequency = function () {
-                if (this.index % frequency !== 0) {
+                if (this.numberOfCalls % frequency !== 0) {
                     return false;
                 }
 
